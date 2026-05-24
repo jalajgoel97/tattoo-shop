@@ -2,7 +2,6 @@ import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
-import { Role } from "@prisma/client";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -19,8 +18,8 @@ export const authOptions: NextAuthOptions = {
       if (user.email && process.env.ADMIN_EMAIL && user.email.toLowerCase() === process.env.ADMIN_EMAIL.toLowerCase()) {
         await prisma.user.upsert({
           where: { email: user.email },
-          update: { role: Role.ADMIN, emailVerified: new Date(), name: user.name || undefined, image: user.image || undefined },
-          create: { email: user.email, role: Role.ADMIN, emailVerified: new Date(), name: user.name || undefined, image: user.image || undefined }
+          update: { role: "ADMIN", emailVerified: new Date(), name: user.name || undefined, image: user.image || undefined },
+          create: { email: user.email, role: "ADMIN", emailVerified: new Date(), name: user.name || undefined, image: user.image || undefined }
         });
       }
       return true;

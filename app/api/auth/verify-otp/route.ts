@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { OTP_SESSION_COOKIE, OTP_SESSION_CLIENT_COOKIE } from "@/lib/session";
 import { normalizeCity } from "@/lib/address";
@@ -50,7 +49,7 @@ export async function POST(req: Request) {
         name: String(body.name).trim(),
         phone: String(body.phone).trim(),
         emailVerified: new Date(),
-        role: shouldBeAdmin ? Role.ADMIN : Role.USER,
+        role: shouldBeAdmin ? "ADMIN" : "USER",
         addresses: {
           create: {
             label: body.label || "Home",
@@ -69,7 +68,7 @@ export async function POST(req: Request) {
   } else if (existing) {
     user = await prisma.user.update({
       where: { id: existing.id },
-      data: { emailVerified: new Date(), ...(shouldBeAdmin ? { role: Role.ADMIN } : {}) }
+      data: { emailVerified: new Date(), ...(shouldBeAdmin ? { role: "ADMIN" as const } : {}) }
     });
   }
 

@@ -30,7 +30,7 @@ export async function POST(req: Request) {
       const pct = clampPercent(b.discountPercent);
       if (!pct) return NextResponse.json({ error: "Enter a discount percentage for multiple products" }, { status: 400 });
       const products = await prisma.product.findMany({ where: { id: { in: productIds } } });
-      await prisma.$transaction(products.map((product) => {
+      await prisma.$transaction(products.map((product: any) => {
         const mrp = product.mrpPaise || product.pricePaise;
         const newPricePaise = Math.round(mrp * (100 - pct) / 100);
         return prisma.product.update({

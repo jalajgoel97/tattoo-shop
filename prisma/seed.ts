@@ -1,4 +1,4 @@
-import { PrismaClient, Role } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 const products = [
@@ -22,7 +22,7 @@ async function main(){
   await prisma.siteSetting.upsert({where:{key:"customBackgroundUrl"},update:{value:""},create:{key:"customBackgroundUrl",value:""}});
   const adminEmail = process.env.ADMIN_EMAIL;
   if (adminEmail) {
-    await prisma.user.upsert({ where: { email: adminEmail }, update: { role: Role.ADMIN, emailVerified: new Date() }, create: { email: adminEmail, role: Role.ADMIN, emailVerified: new Date(), name: "Store Owner" } });
+    await prisma.user.upsert({ where: { email: adminEmail }, update: { role: "ADMIN", emailVerified: new Date() }, create: { email: adminEmail, role: "ADMIN", emailVerified: new Date(), name: "Store Owner" } });
     console.log(`Admin user ready: ${adminEmail}`);
   } else console.log("ADMIN_EMAIL not set. Add it to .env and run npm run seed again to create an admin.");
 }
