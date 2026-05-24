@@ -1,0 +1,191 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  CONFIRMED
+  PACKED
+  SHIPPED
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+enum CouponType {
+  PERCENT
+  FIXED
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  phone         String?
+  emailVerified DateTime?
+  image         String?
+  role          Role      @default(USER)
+  accounts      Account[]
+  sessions      Session[]
+  otps          OtpToken[]
+  addresses     Address[]
+  orders        Order[]
+  cartItems     CartItem[]
+  createdAt     DateTime  @default(now())
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model OtpToken {
+  id        String   @id @default(cuid())
+  email     String
+  codeHash  String
+  expiresAt DateTime
+  consumed  Boolean  @default(false)
+  attempts  Int      @default(0)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model Product {
+  id              String         @id @default(cuid())
+  name            String
+  slug            String         @unique
+  category        String
+  description     String
+  pricePaise      Int
+  mrpPaise        Int?
+  imageUrl        String
+  imageUrls       String         @default("[]")
+  stock           Int            @default(0)
+  tags            String         @default("")
+  active          Boolean        @default(true)
+  discountPercent Int            @default(0)
+  discountPaise   Int            @default(0)
+  buyOneGetOne    Boolean        @default(false)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  items           OrderItem[]
+  cartItems       CartItem[]
+}
+
+model Coupon {
+  id              String     @id @default(cuid())
+  code            String     @unique
+  type            CouponType @default(PERCENT)
+  value           Int
+  active          Boolean    @default(true)
+  minCartPaise    Int        @default(0)
+  maxDiscountPaise Int?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  orders          Order[]
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+}
+
+model Address {
+  id        String   @id @default(cuid())
+  userId    String
+  label     String
+  fullName  String
+  phone     String
+  line1     String
+  line2     String?
+  city      String
+  state     String
+  pincode   String
+  country   String   @default("India")
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Order {
+  id                String      @id @default(cuid())
+  userId            String
+  orderNumber       String      @unique @default(cuid())
+  status            OrderStatus @default(PENDING)
+  subtotalPaise     Int         @default(0)
+  discountPaise     Int         @default(0)
+  totalPaise        Int
+  couponCode        String?
+  couponId          String?
+  addressSnapshot   String
+  razorpayOrderId   String?     @unique
+  razorpayPaymentId String?
+  createdAt         DateTime    @default(now())
+  user              User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  coupon            Coupon?     @relation(fields: [couponId], references: [id])
+  items             OrderItem[]
+}
+
+model OrderItem {
+  id         String  @id @default(cuid())
+  orderId    String
+  productId  String
+  quantity   Int
+  pricePaise Int
+  order      Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product    Product @relation(fields: [productId], references: [id])
+}
+
+model SiteSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
